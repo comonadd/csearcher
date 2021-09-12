@@ -1,6 +1,6 @@
 import fire
-from codesearch.searcher import CodeSearch
+from codesearch.searcher import CodeSearchCLI
 
 
 if __name__ == "__main__":
-    fire.Fire(CodeSearch)
+    fire.Fire(CodeSearchCLI)

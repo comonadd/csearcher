@@ -2,6 +2,7 @@ import sys, inspect
 import re
 import os
 from codesearch.config import Config
+from codesearch.entry import Entry, EntryKind
 from pydoc import importfile
 
 
@@ -15,10 +16,12 @@ class PythonHandler:
         classes = [cl for cl in classes if cl[1].__module__ == mod.__name__]
         # filter out all that don't match the provided pattern
         classes = [cl for cl in classes if re.search(cl_pattern, cl[0])]
-        for cname, cl in classes:
-            entry = { "line": 0, "col": 0, "class": cname }
+        for cname, sym in classes:
+            import pdb; pdb.set_trace()
+            line = sym.__class__.co_firstlineno
+            entry = Entry(line=line, name=cname, kind=EntryKind.Class)
             if config.source:
-                entry["source"] = inspect.getsource(cl)
+                entry["source"] = inspect.getsource(sym)
             yield entry
 
     @staticmethod
@@ -31,7 +34,8 @@ class PythonHandler:
         # filter out all that don't match the provided pattern
         items = [sym for sym in items if re.search(pattern, sym[0])]
         for name, sym in items:
-            entry = { "line": 0, "col": 0, "class": name }
+            line = sym.__code__.co_firstlineno
+            entry = Entry(line=line, name=name, kind=EntryKind.Function)
             if config.source:
-                entry["source"] = inspect.getsource(cl)
+                entry["source"] = inspect.getsource(sym)
             yield entry

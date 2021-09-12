@@ -31,7 +31,8 @@ class CppHandler:
             line = t.location.line
             column = t.location.column
             if re.search(pattern, t.spelling):
-                yield { "line": line, "col": column, "class": t.spelling }
+                entry = Entry(line=line, col=column, name=t.spelling, kind=EntryKind.Class)
+                yield entry
 
     @classmethod
     def fun(cls, config: Config, f: str, pattern):
@@ -47,4 +48,5 @@ class CppHandler:
             line = t.location.line
             column = t.location.column
             if re.search(pattern, t.spelling):
-                yield { "line": line, "col": column, "class": t.spelling }
+                entry = Entry(line=line, col=column, name=t.spelling, kind=EntryKind.Function)
+                yield entry
