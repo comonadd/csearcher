@@ -5,7 +5,7 @@ import re
 import pathlib
 import json
 from pydoc import importfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Set
 from collections import defaultdict
 
@@ -18,21 +18,22 @@ class InvalidConfig(Exception):
 
 @dataclass
 class Config:
-    exclude: Set[str]
+    exclude: Set[str] = field(default_factory=set)
     source: bool = False
 
     @staticmethod
     def from_json(json_s: str):
         parsed = json.loads(json_s)
-        if type(parsed["exclude"]) != list:
-            print(f"\"exclude\" must be a list, got {type(parsed['exclude'])}", file=sys.stderr)
-            raise InvalidConfig
-        parsed["exclude"] = set(parsed["exclude"])
+        if "exclude" in parsed:
+            if type(parsed["exclude"]) != list:
+                print(f"\"exclude\" must be a list, got {type(parsed['exclude'])}", file=sys.stderr)
+                raise InvalidConfig
+            parsed["exclude"] = set(parsed["exclude"])
         conf = Config(**parsed)
         return conf
 
 default_config = Config(
-    exclude=set([r"__main__.py", r"__init__.py", r"setup.py"]),
+    exclude=set([r"__main__.py", r"__init__.py", r"setup.py", r"__pycache__"]),
 )
 
 def merge_configs(a: Config, b: Config):

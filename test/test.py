@@ -26,12 +26,12 @@ def test_python_functions():
 def test_python_classes():
     pytree = pathlib.Path(tests_root, "python-tree")
     c = CodeSearch(dir=pytree)
-    entries = c.fun("Manager")
+    entries = c.cls("Manager")
     k = f"{pytree}/main.py"
     assert k in entries
     expected_entries = set([
-        Entry(line=1, col=0, name="CatManager", kind=EntryKind.Class),
-        Entry(line=7, col=0, name="CatManagerManager", kind=EntryKind.Class),
-        Entry(line=1, col=0, name="Manager", kind=EntryKind.Class),
+        Entry(line=19, col=0, name="CatManager", kind=EntryKind.Class),
+        Entry(line=22, col=0, name="CatManagerManager", kind=EntryKind.Class),
+        Entry(line=16, col=0, name="Manager", kind=EntryKind.Class),
     ])
     assert set(entries[k]) == expected_entries

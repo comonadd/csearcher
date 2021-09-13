@@ -17,8 +17,8 @@ class PythonHandler:
         # filter out all that don't match the provided pattern
         classes = [cl for cl in classes if re.search(cl_pattern, cl[0])]
         for cname, sym in classes:
-            import pdb; pdb.set_trace()
-            line = sym.__class__.co_firstlineno
+            # TODO: this is kind of slow, use something else?
+            line = inspect.findsource(sym)[1] + 1
             entry = Entry(line=line, name=cname, kind=EntryKind.Class)
             if config.source:
                 entry["source"] = inspect.getsource(sym)

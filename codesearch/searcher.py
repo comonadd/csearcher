@@ -9,6 +9,7 @@ from typing import List, Set
 from collections import defaultdict
 from codesearch.handlers import handler_for_file_type
 from codesearch.config import Config, load_config, merge_configs
+from codesearch.entry import Entry
 
 COL_PINK = '\033[95m'
 COL_OKBLUE = '\033[94m'
@@ -64,7 +65,10 @@ class CodeSearch:
     def cls(self, classname):
         cl_pattern = re.compile(classname)
         entries = defaultdict(list)
+        print(self.files)
         for f in self.files:
+            if os.path.isdir(f):
+                continue
             handler = handler_for_file_type(f)
             if handler is not None:
                 fentries = handler.cls(self.config, f, cl_pattern)
@@ -85,29 +89,20 @@ class CodeSearch:
                 entries[f] = fentries
         return entries
 
+def print_search_results(entries: List[Entry]):
+    if len(entries) == 0:
+        print("Nothing found")
+        return
+    for f, fentries in entries.items():
+        for entry in fentries:
+            print(entry)
+
 class CodeSearchCLI:
     def __init__(self, dir=".", source=None):
         self.searcher = CodeSearch(dir, source)
 
     def cls(self, classname):
-        entries = self.searcher.cls(classname)
-        if len(entries) == 0:
-            print("Nothing found")
-            return
-        for f, fentries in entries.items():
-            for entry in fentries:
-                print(f"\tClass [{entry['line']}:{entry['col']}]: {entry['class']}")
-                if 'source' in entry:
-                    print(entry['source'])
+        print_search_results(self.searcher.cls(classname))
 
     def fun(self, funname):
-        entries = self.searcher.fun(funname)
-        if len(entries) == 0:
-            print("Nothing found")
-            return
-        for f, fentries in entries.items():
-            print(cmd_green(f))
-            for entry in fentries:
-                print(entry)
-                if 'source' in entry:
-                    print(entry['source'])
+        print_search_results(self.searcher.fun(funname))
