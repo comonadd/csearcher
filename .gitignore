@@ -2,3 +2,6 @@
 test-trees
 venv
 __pycache__
+dist
+*.egg-info
+build/

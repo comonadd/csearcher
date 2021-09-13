@@ -1,2 +1,7 @@
-Make it so that the handlers are included in a modular style, with no required handlers
-Javascript handler
+Modify clang opts based on a language (C vs C++)
+clang config options
+daemon for indexing
+reference search
+single file input
+Replace --dir flag with something more convenient
+Highlight entry name in search results
