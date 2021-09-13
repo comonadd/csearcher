@@ -24,12 +24,6 @@ def cmd_colgen(col: str):
     return cmd_out
 cmd_green = cmd_colgen(COL_OKGREEN)
 
-def is_excluded(config: Config, fname: str):
-    for r in config.exclude:
-        if re.search(r, fname):
-            return True
-    return False
-
 def determine_included_files(config: Config, dir: str):
     all_files = glob.glob(f"{dir}/**", recursive=True)
     excluded_files = set([])

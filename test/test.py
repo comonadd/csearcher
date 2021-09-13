@@ -35,3 +35,29 @@ def test_python_classes():
         Entry(line=16, col=0, name="Manager", kind=EntryKind.Class),
     ])
     assert set(entries[k]) == expected_entries
+
+
+def test_js_functions():
+    tree = pathlib.Path(tests_root, "js-tree")
+    c = CodeSearch(dir=tree)
+    entries = c.fun("other")
+    k = f"{tree}/es6.js"
+    assert k in entries
+    expected_entries = set([
+        Entry(line=11, col=6, name="anotherFunction", kind=EntryKind.Function),
+        Entry(line=18, col=9, name="otherFun", kind=EntryKind.Function),
+    ])
+    assert set(entries[k]) == expected_entries
+
+
+def test_js_classes():
+    tree = pathlib.Path(tests_root, "js-tree")
+    c = CodeSearch(dir=tree)
+    entries = c.cls("Hello")
+    k = f"{tree}/es6.js"
+    assert k in entries
+    expected_entries = set([
+        Entry(line=15, col=6, name="HelloWorld", kind=EntryKind.Class),
+        Entry(line=1, col=6, name="Hello", kind=EntryKind.Class),
+    ])
+    assert set(entries[k]) == expected_entries

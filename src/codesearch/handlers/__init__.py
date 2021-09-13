@@ -1,6 +1,7 @@
 import os
 from codesearch.handlers.cpp import CppHandler
 from codesearch.handlers.python import PythonHandler
+from codesearch.handlers.js import JSHandler
 
 
 handlers = {
@@ -10,6 +11,7 @@ handlers = {
     ".cc": CppHandler,
     ".h": CppHandler,
     ".cxx": CppHandler,
+    ".js": JSHandler,
 }
 
 def handler_for_file_type(f: str):

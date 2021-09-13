@@ -1,0 +1,55 @@
+Metadata-Version: 2.1
+Name: codesearcher-comonadd
+Version: 0.0.1
+Summary: Code search utility
+Home-page: https://github.com/comonadd/codesearcher
+Author: Dmitry Guzeev
+Author-email: dmitri.guzeev@gmail.com
+License: UNKNOWN
+Project-URL: Bug Tracker, https://github.com/comonadd/codesearcher/issues
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+
+# codesearch
+
+WIP: Utility for searching code in your project.
+
+Currently supported languages: C++, C, Python.
+
+Search by:
+
+- function name
+- class name
+
+## Usage
+
+You can use this tool without any configuration.
+
+**Find all functions containing "print" in the current directory**
+
+```bash
+csr fun print
+```
+
+**Search by class name**
+
+```bash
+csr cls Manager
+```
+
+## Configuration
+
+To set up a project, you need to create a configuration file `code-search.json`
+
+```json
+{
+  // Exclude specified glob patterns
+  "exclude": ["docs/", "**/*.test.py", "__pycache__"]
+}
+```
+
+
