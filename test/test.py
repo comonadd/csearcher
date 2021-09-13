@@ -61,3 +61,31 @@ def test_js_classes():
         Entry(line=1, col=6, name="Hello", kind=EntryKind.Class),
     ])
     assert set(entries[k]) == expected_entries
+
+
+def test_cpp_functions():
+    tree = pathlib.Path(tests_root, "cpp-tree")
+    c = CodeSearch(dir=tree)
+    entries = c.fun("do")
+    k = f"{tree}/main.cpp"
+    assert k in entries
+    expected_entries = set([
+        Entry(line=1, col=5, name="do_this", kind=EntryKind.Function),
+        Entry(line=5, col=5, name="does_that_do_this", kind=EntryKind.Function),
+        Entry(line=18, col=5, name="why_do_that", kind=EntryKind.Function),
+    ])
+    assert set(entries[k]) == expected_entries
+
+
+def test_cpp_classes():
+    tree = pathlib.Path(tests_root, "cpp-tree")
+    c = CodeSearch(dir=tree)
+    entries = c.cls("Man")
+    k = f"{tree}/main.cpp"
+    assert k in entries
+    expected_entries = set([
+        Entry(line=9, col=7, name="Manager", kind=EntryKind.Class),
+        Entry(line=15, col=7, name="CatManager", kind=EntryKind.Class),
+    ])
+    assert set(entries[k]) == expected_entries
+
