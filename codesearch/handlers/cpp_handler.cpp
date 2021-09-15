@@ -53,6 +53,7 @@ struct Entry {
   const char* name;
   u32 line;
   u32 col;
+  std::smatch match;
 };
 
 using CursorKinds = std::set<CXCursorKind>;
@@ -89,8 +90,11 @@ std::vector<Entry> process_file(CXIndex index,
           if (!fs::equivalent(sym_fname_cstr, abspath_cstr)) {
             return CXChildVisit_Recurse;
           }
-          if (std::regex_search(c_str, pattern)) {
-            entries.push_back(Entry{.name = c_str, .line = line, .col = col});
+          std::smatch sm;
+          auto s = std::string(c_str);
+          if (std::regex_search(s, sm, pattern)) {
+            entries.push_back(
+                Entry{.name = c_str, .line = line, .col = col, .match = sm});
           }
         }
         return CXChildVisit_Recurse;
@@ -122,7 +126,17 @@ static PyObject* py_handler_for(PyObject* self, PyObject* args,
     PyObject* entry_line = PyLong_FromLong(entry.line);
     PyObject* entry_col = PyLong_FromLong(entry.col);
     PyDict_SetItemString(py_entry, "line", entry_line);
+
+    auto* py_match = PyTuple_New(2);
+    PyObject* start_pos = PyLong_FromLong(entry.match.position(0));
+    PyObject* end_pos =
+        PyLong_FromLong(entry.match.position(0) + entry.match.length(0));
+    PyTuple_SET_ITEM(py_match, 0, start_pos);
+    PyTuple_SET_ITEM(py_match, 1, end_pos);
+    PyDict_SetItemString(py_entry, "match", py_match);
+
     PyDict_SetItemString(py_entry, "col", entry_col);
+
     PyList_Append(py_entries, py_entry);
   }
   return py_entries;

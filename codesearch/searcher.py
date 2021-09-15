@@ -99,10 +99,12 @@ def print_search_results(entries: Entries):
         for entry in fentries:
             found_something = True
             pt = f"\t{entry.kind} [{entry.line}:{entry.col}]: "
-            if entry.match is not None:
-                start, end = entry.match.span()
-            else:
+            if entry.match is None:
                 start, end = 0, 0
+            elif isinstance(entry.match, tuple):
+                start, end = entry.match
+            elif isinstance(entry.match, re.Match):
+                start, end = entry.match.span()
             t = entry.name
             pt += t[:start]
             pt += cmd_yellow(t[start:end])
