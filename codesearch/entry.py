@@ -1,3 +1,4 @@
+import re
 from enum import Enum
 from dataclasses import dataclass
 
@@ -16,9 +17,10 @@ class Entry:
     kind: EntryKind
     name: str
     col: int = 0
+    match: re.Match = None
 
     def __str__(self):
-        return f"\t{self.kind} [{self.line}:{self.col}]: {self.name}"
+        return f"<{self.kind} [{self.line}:{self.col}] \"{self.name}\">"
 
     def __hash__(self):
         return self.__str__().__hash__()

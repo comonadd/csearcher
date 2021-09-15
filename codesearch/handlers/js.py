@@ -6,8 +6,8 @@ import esprima
 
 
 class JSHandler:
-    @staticmethod
-    def cls(config: Config, f: str, pattern):
+    @classmethod
+    def cls(cls, config: Config, f: str, pattern):
         with open(f, "r") as source:
             program = source.read()
         parsed = esprima.parseScript(program, { "loc": True })
@@ -24,8 +24,8 @@ class JSHandler:
             yield Entry(line=line, col=col, name=name, kind=EntryKind.Class)
         return []
 
-    @staticmethod
-    def fun(config: Config, f: str, pattern):
+    @classmethod
+    def fun(cls, config: Config, f: str, pattern):
         with open(f, "r") as source:
             program = source.read()
         parsed = esprima.parseScript(program, { "loc": True })

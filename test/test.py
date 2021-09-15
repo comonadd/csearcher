@@ -1,20 +1,38 @@
 import pytest
 import os
 import pathlib
-from codesearch import *
+from codesearch import Entry, EntryKind, InvalidDirectoryPath, CodeSearch
+from unittest.mock import patch
+
+tests_root = os.path.dirname(os.path.realpath(__file__))
 
 
 def test_invalid_dir():
     with pytest.raises(InvalidDirectoryPath):
-        c = CodeSearch(dir="./invalid-dir")
+        CodeSearch(dir="./invalid-dir")
 
-tests_root = os.path.dirname(os.path.realpath(__file__))
 
+def custom_entry_compare(self, other):
+    if self.line != other.line: return False
+    if self.col != other.col: return False
+    if self.name != other.name: return False
+    if self.kind != other.kind: return False
+    return True
+
+
+def entry_test(fun):
+   @patch("codesearch.entry.Entry.__eq__", custom_entry_compare)
+   def wrapper():
+       fun()
+   return wrapper
+
+
+@entry_test
 def test_python_functions():
     pytree = pathlib.Path(tests_root, "python-tree")
     c = CodeSearch(dir=pytree)
     entries = c.fun("some")
-    k = f"{pytree}/main.py"
+    k = pathlib.Path(f"{pytree}/main.py")
     assert k in entries
     expected_entries = set([
         Entry(line=1, col=0, name="some_fun", kind=EntryKind.Function),
@@ -23,11 +41,12 @@ def test_python_functions():
     assert set(entries[k]) == expected_entries
 
 
+@entry_test
 def test_python_classes():
     pytree = pathlib.Path(tests_root, "python-tree")
     c = CodeSearch(dir=pytree)
     entries = c.cls("Manager")
-    k = f"{pytree}/main.py"
+    k = pathlib.Path(f"{pytree}/main.py")
     assert k in entries
     expected_entries = set([
         Entry(line=19, col=0, name="CatManager", kind=EntryKind.Class),
@@ -37,11 +56,12 @@ def test_python_classes():
     assert set(entries[k]) == expected_entries
 
 
+@entry_test
 def test_js_functions():
     tree = pathlib.Path(tests_root, "js-tree")
     c = CodeSearch(dir=tree)
     entries = c.fun("other")
-    k = f"{tree}/es6.js"
+    k = pathlib.Path(f"{tree}/es6.js")
     assert k in entries
     expected_entries = set([
         Entry(line=11, col=6, name="anotherFunction", kind=EntryKind.Function),
@@ -50,11 +70,12 @@ def test_js_functions():
     assert set(entries[k]) == expected_entries
 
 
+@entry_test
 def test_js_classes():
     tree = pathlib.Path(tests_root, "js-tree")
     c = CodeSearch(dir=tree)
     entries = c.cls("Hello")
-    k = f"{tree}/es6.js"
+    k = pathlib.Path(f"{tree}/es6.js")
     assert k in entries
     expected_entries = set([
         Entry(line=15, col=6, name="HelloWorld", kind=EntryKind.Class),
@@ -63,11 +84,12 @@ def test_js_classes():
     assert set(entries[k]) == expected_entries
 
 
+@entry_test
 def test_cpp_functions():
     tree = pathlib.Path(tests_root, "cpp-tree")
     c = CodeSearch(dir=tree)
     entries = c.fun("do")
-    k = f"{tree}/main.cpp"
+    k = pathlib.Path(f"{tree}/main.cpp")
     assert k in entries
     expected_entries = set([
         Entry(line=1, col=5, name="do_this", kind=EntryKind.Function),
@@ -77,15 +99,15 @@ def test_cpp_functions():
     assert set(entries[k]) == expected_entries
 
 
+@entry_test
 def test_cpp_classes():
     tree = pathlib.Path(tests_root, "cpp-tree")
     c = CodeSearch(dir=tree)
     entries = c.cls("Man")
-    k = f"{tree}/main.cpp"
+    k = pathlib.Path(f"{tree}/main.cpp")
     assert k in entries
     expected_entries = set([
         Entry(line=9, col=7, name="Manager", kind=EntryKind.Class),
         Entry(line=15, col=7, name="CatManager", kind=EntryKind.Class),
     ])
     assert set(entries[k]) == expected_entries
-

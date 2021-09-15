@@ -4,12 +4,15 @@ import os
 import re
 import pathlib
 import json
-from dataclasses import dataclass
-from typing import List, Set
+from dataclasses import dataclass, field
+from typing import List, Set, Dict
 from collections import defaultdict
 from codesearch.handlers import handler_for_file_type
 from codesearch.config import Config, load_config, merge_configs
 from codesearch.entry import Entry
+from timeit import timeit
+import cProfile
+import fnmatch
 
 COL_PINK = '\033[95m'
 COL_OKBLUE = '\033[94m'
@@ -18,25 +21,37 @@ COL_WARNING = '\033[93m'
 COL_FAIL = '\033[91m'
 COL_ENDC = '\033[0m'
 
+
 def cmd_colgen(col: str):
     def cmd_out(text):
         return f"{col}{text}{COL_ENDC}"
     return cmd_out
+
+
 cmd_green = cmd_colgen(COL_OKGREEN)
+cmd_yellow = cmd_colgen(COL_WARNING)
+
+
+Entries = Dict[pathlib.Path, List[Entry]]
+
 
 def determine_included_files(config: Config, dir: str):
-    all_files = glob.glob(f"{dir}/**", recursive=True)
-    excluded_files = set([])
-    for pattern in config.exclude:
-        subpatterns = [
-            glob.glob(f"{dir}/**/{pattern}", recursive=True),
-            glob.glob(f"{dir}/{pattern}/**/*", recursive=True),
-        ]
-        for sp in subpatterns:
-            for f in sp:
-                excluded_files.add(f)
-    filtered_files = [f for f in all_files if f not in excluded_files]
-    return filtered_files
+    files = []
+    def iter(d):
+        for f in os.listdir(d):
+            skip = any([fnmatch.fnmatch(f, p) for p in config.exclude])
+            fp = pathlib.Path(d, f)
+            if skip:
+                continue
+            if os.path.isdir(fp):
+                if fp in config.exclude:
+                    continue
+                iter(fp)
+            else:
+                files.append(fp)
+    iter(dir)
+    #print(files)
+    return files
 
 class InvalidDirectoryPath(Exception):
     def __init__(self, path):
@@ -56,40 +71,44 @@ class CodeSearch:
             self.config.source = source
         self.files = determine_included_files(self.config, dir)
 
-    def cls(self, classname):
-        cl_pattern = re.compile(classname)
-        entries = defaultdict(list)
-        print(self.files)
+    def for_all_files_execute_handler(self, handler_key: str, search_pattern: str):
+        pattern = re.compile(search_pattern)
+        entries = defaultdict(dict)
         for f in self.files:
-            if os.path.isdir(f):
-                continue
             handler = handler_for_file_type(f)
             if handler is not None:
-                fentries = handler.cls(self.config, f, cl_pattern)
-                print(fentries)
+                fun = handler.__dict__[handler_key].__func__
+                fentries = list(fun(handler, self.config, f, pattern))
                 entries[f] = fentries
         return entries
+
+    def cls(self, classname):
+        return self.for_all_files_execute_handler("cls", classname)
 
     def fun(self, funname):
-        pattern = re.compile(funname)
-        entries = defaultdict(dict)
-        found = False
-        for f in self.files:
-            handler = handler_for_file_type(f)
-            if handler is not None:
-                fentries = list(handler.fun(self.config, f, pattern))
-                if len(fentries) == 0:
-                    continue
-                entries[f] = fentries
-        return entries
+        return self.for_all_files_execute_handler("fun", funname)
 
-def print_search_results(entries: List[Entry]):
-    if len(entries) == 0:
+
+def print_search_results(entries: Entries):
+    found_something = False
+    for f, fentries in entries.items():
+        nothing_in_file = len(fentries) == 0
+        if nothing_in_file:
+            continue
+        print(cmd_green(f))
+        for entry in fentries:
+            found_something = True
+            pt = f"\t{entry.kind} [{entry.line}:{entry.col}]: "
+            start, end = entry.match.span()
+            t = entry.name
+            pt += t[:start]
+            pt += cmd_yellow(t[start:end])
+            pt += t[end:]
+            print(pt)
+    if not found_something:
         print("Nothing found")
         return
-    for f, fentries in entries.items():
-        for entry in fentries:
-            print(entry)
+
 
 class CodeSearchCLI:
     def __init__(self, dir=".", source=None):

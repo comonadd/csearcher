@@ -1,3 +1,3 @@
 #!/bin/bash
-export PYTHONPATH=$(pwd)/src
-pytest test/test.py
+export PYTHONPATH=$(pwd)
+pytest test/test.py $@
