@@ -1,13 +1,19 @@
 # codesearch
 
-WIP: Utility for searching code in your project.
+WIP: Command-line utility for searching code.
 
-Currently supported languages: C++, C, Python.
+Currently supported languages: C/C++, JavaScript, Python.
 
-Search by:
+Currently can search by:
 
 - function name
 - class name
+
+TODO:
+
+- Reference search
+- TypeScript
+- Generic symbol search
 
 ## Usage
 
