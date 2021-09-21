@@ -27,6 +27,7 @@ handlers = {
     ".h": import_cpp_handler,
     ".cxx": import_cpp_handler,
     ".js": import_js_handler,
+    ".ts": import_js_handler,
 }
 
 

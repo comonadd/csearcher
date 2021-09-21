@@ -14,17 +14,18 @@ from timeit import timeit
 import cProfile
 import fnmatch
 
-COL_PINK = '\033[95m'
-COL_OKBLUE = '\033[94m'
-COL_OKGREEN = '\033[92m'
-COL_WARNING = '\033[93m'
-COL_FAIL = '\033[91m'
-COL_ENDC = '\033[0m'
+COL_PINK = "\033[95m"
+COL_OKBLUE = "\033[94m"
+COL_OKGREEN = "\033[92m"
+COL_WARNING = "\033[93m"
+COL_FAIL = "\033[91m"
+COL_ENDC = "\033[0m"
 
 
 def cmd_colgen(col: str):
     def cmd_out(text):
         return f"{col}{text}{COL_ENDC}"
+
     return cmd_out
 
 
@@ -37,6 +38,7 @@ Entries = Dict[pathlib.Path, List[Entry]]
 
 def determine_included_files(config: Config, dir: str):
     files = []
+
     def iter(d):
         for f in os.listdir(d):
             skip = any([fnmatch.fnmatch(f, p) for p in config.exclude])
@@ -49,16 +51,18 @@ def determine_included_files(config: Config, dir: str):
                 iter(fp)
             else:
                 files.append(fp)
+
     iter(dir)
-    #print(files)
     return files
+
 
 class InvalidDirectoryPath(Exception):
     def __init__(self, path):
         self.path = path
 
     def __str__(self):
-        return f"Invalid directory path specified: \"{self.path}\""
+        return f'Invalid directory path specified: "{self.path}"'
+
 
 class CodeSearch:
     def __init__(self, dir=".", source=None):

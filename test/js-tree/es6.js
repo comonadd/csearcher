@@ -28,3 +28,10 @@ function otherFun (b) {
   noop();
   noop();
 };
+
+const b = {
+  "hello": 3,
+  "hello": "world",
+};
+
+var s = 8;

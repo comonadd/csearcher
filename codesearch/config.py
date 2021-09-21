@@ -73,6 +73,7 @@ def construct_default_config_for_dir(dirpath: pathlib.Path):
         "*.png", "*.jpg", "*.bin", "*.jar", "*.exe", "*.so", "*.dll",
         "*.ini", "*.xml", "*.html", "*.css", ".git", "Makefile", "*.json", "LICENSE", "*.md",
         "CHANGELOG", "bin", ".gitignore", ".github", "*.rst", ".coveragerc", ".pylintrc", "*.txt",
+        "node_modules", "package-lock.json", "*.min.js", "build",
     ]
     default_config = Config(exclude=exclude)
     return default_config

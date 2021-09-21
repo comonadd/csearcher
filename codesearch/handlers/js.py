@@ -10,7 +10,7 @@ class JSHandler:
     def cls(cls, config: Config, f: str, pattern):
         with open(f, "r") as source:
             program = source.read()
-        parsed = esprima.parseScript(program, { "loc": True })
+        parsed = esprima.parseScript(program, {"loc": True})
         for item in parsed.body:
             if item.type == "ClassDeclaration":
                 loc = item.id.loc
@@ -28,9 +28,24 @@ class JSHandler:
     def fun(cls, config: Config, f: str, pattern):
         with open(f, "r") as source:
             program = source.read()
-        parsed = esprima.parseScript(program, { "loc": True })
+        is_typescript = str(f).endswith(".ts")
+        print(f"TYPESCRIPT ENABLED: {is_typescript}")
+        parsed = esprima.parse(
+            program,
+            {
+                "loc": True,
+                "sourceType": "module",
+                "jsx": True,
+                "typescript": is_typescript,
+            },
+        )
+        print("PROGRAM")
+        print(parsed)
         for item in parsed.body:
-            if item.type == "VariableDeclaration" and item.declarations[0].init.type == "ArrowFunctionExpression":
+            if (
+                item.type == "VariableDeclaration"
+                and item.declarations[0].init.type == "ArrowFunctionExpression"
+            ):
                 # arrow functions
                 loc = item.declarations[0].id.loc
                 name = item.declarations[0].id.name
