@@ -1,15 +1,18 @@
-import re
-from enum import Enum
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+from enum import IntEnum
+from typing import Optional, Tuple
 
-class EntryKind(Enum):
+
+class EntryKind(IntEnum):
     Function = 0
     Class = 1
 
     def __str__(self):
         return entry_kind_to_str[self]
 
-entry_kind_to_str = { EntryKind.Function: "Fun", EntryKind.Class: "Cls" }
+
+entry_kind_to_str = {EntryKind.Function: "Fun", EntryKind.Class: "Class"}
+
 
 @dataclass
 class Entry:
@@ -17,10 +20,26 @@ class Entry:
     kind: EntryKind
     name: str
     col: int = 0
-    match: re.Match = None
+    match: Tuple[int, int] = (0, 0)
+    source: Optional[str] = None
 
     def __str__(self):
-        return f"<{self.kind} [{self.line}:{self.col}] \"{self.name}\">"
+        return f'<{self.kind} [{self.line}:{self.col}] "{self.name}">'
 
     def __hash__(self):
         return self.__str__().__hash__()
+
+    def to_dict(self):
+        return {
+            "line": self.line,
+            "kind": int(self.kind),
+            "name": self.name,
+            "col": self.col,
+            "match": self.match,
+        }
+
+    @classmethod
+    def from_dict(cls, d):
+        res = cls(**d)
+        res.kind = EntryKind(d["kind"])
+        return res

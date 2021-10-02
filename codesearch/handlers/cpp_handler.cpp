@@ -58,17 +58,12 @@ struct Entry {
 
 using CursorKinds = std::set<CXCursorKind>;
 
-std::vector<Entry> process_file(CXIndex index,
-                                const CursorKinds& predicate_kinds,
-                                char const* filename, char const* pattern_s) {
+std::vector<Entry> process_file_with(CXTranslationUnit unit,
+                                     const CursorKinds& predicate_kinds,
+                                     char const* filename,
+                                     char const* pattern_s) {
   std::regex pattern(pattern_s, std::regex_constants::ECMAScript |
                                     std::regex_constants::icase);
-  CXTranslationUnit unit = clang_parseTranslationUnit(
-      index, filename, nullptr, 0, nullptr, 0, CXTranslationUnit_None);
-  if (unit == nullptr) {
-    cerr << "Unable to parse translation unit: " << filename << endl;
-    return {};
-  }
   CXCursor cursor = clang_getTranslationUnitCursor(unit);
   std::vector<Entry> entries;
   auto abspath = fs::absolute(filename);
@@ -100,24 +95,60 @@ std::vector<Entry> process_file(CXIndex index,
         return CXChildVisit_Recurse;
       });
   clang_visitChildren(cursor, visitor, nullptr);
-  clang_disposeTranslationUnit(unit);
   return entries;
 }
 
+std::vector<Entry> process_file(CXIndex index,
+                                const CursorKinds& predicate_kinds,
+                                char const* filename, char const* pattern_s) {
+  CXTranslationUnit unit = clang_parseTranslationUnit(
+      index, filename, nullptr, 0, nullptr, 0, CXTranslationUnit_None);
+  if (unit == nullptr) {
+    cerr << "Unable to parse translation unit: " << filename << endl;
+    return {};
+  }
+  auto res = process_file_with(unit, predicate_kinds, filename, pattern_s);
+  clang_disposeTranslationUnit(unit);
+  return res;
+}
+
 static CXIndex _index;
+std::unordered_map<const char*, CXTranslationUnit> indexed_files;
 
 std::set FUNCTION_CURSOR_KINDS = {CXCursor_FunctionDecl};
 std::set CLASS_CURSOR_KINDS = {CXCursor_ClassDecl, CXCursor_ClassTemplate,
                                CXCursor_StructDecl};
 
+static bool build_index(const char* filename) {
+  CXTranslationUnit unit = clang_parseTranslationUnit(
+      _index, filename, nullptr, 0, nullptr, 0, CXTranslationUnit_None);
+  if (unit == nullptr) {
+    cerr << "Unable to parse translation unit: " << filename << endl;
+    return false;
+  }
+  indexed_files[filename] = unit;
+  return true;
+}
+
+static CXTranslationUnit get_indexed_file(char const* filename) {
+  auto res = indexed_files.find(filename);
+  if (res == indexed_files.end()) {
+    build_index(filename);
+  }
+  return indexed_files.at(filename);
+}
+
 static PyObject* py_handler_for(PyObject* self, PyObject* args,
                                 CursorKinds kinds) {
   const char* filename;
   const char* pattern;
-  if (!PyArg_ParseTuple(args, "ss", &filename, &pattern)) {
+  bool use_index = false;
+  if (!PyArg_ParseTuple(args, "ssb", &filename, &pattern, &use_index)) {
     return NULL;
   }
-  auto entries = process_file(_index, kinds, filename, pattern);
+  auto entries = use_index ? process_file_with(get_indexed_file(filename),
+                                               kinds, filename, pattern)
+                           : process_file(_index, kinds, filename, pattern);
   auto* py_entries = PyList_New(0);
   for (auto& entry : entries) {
     auto* py_entry = PyDict_New();
@@ -151,9 +182,20 @@ static PyObject* file_cls(PyObject* self, PyObject* args) {
   return py_handler_for(self, args, CLASS_CURSOR_KINDS);
 }
 
+static PyObject* index_file(PyObject* self, PyObject* args) {
+  const char* filename;
+  if (!PyArg_ParseTuple(args, "s", &filename)) {
+    return NULL;
+  }
+  build_index(filename);
+  auto* res = PyBool_FromLong(1);
+  return res;
+}
+
 static PyMethodDef cppHandlerMethods[] = {
     {"file_fun", file_fun, METH_VARARGS, "File functions"},
     {"file_cls", file_cls, METH_VARARGS, "File class declarations"},
+    {"index_file", index_file, METH_VARARGS, "Index file"},
     {NULL, NULL, 0, NULL} /* Sentinel */
 };
 

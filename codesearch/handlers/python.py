@@ -10,28 +10,40 @@ import ast
 
 class PythonHandler:
     @classmethod
-    def cls(cls, config: Config, f: pathlib.Path, pattern):
-        mod = importfile(str(f))
-        classes = inspect.getmembers(mod, inspect.isclass)
-        # filter out all imported classes
-        classes = [cl for cl in classes if cl[1].__module__ == mod.__name__]
-        # filter out all that don't match the provided pattern
-        for name, sym in classes:
-            match = re.search(pattern, name)
-            if not match:
-                continue
-            # TODO: this is kind of slow, use something else?
-            line = inspect.findsource(sym)[1] + 1
-            entry = Entry(line=line, name=name, kind=EntryKind.Class, match=match)
-            if config.source:
-                entry["source"] = inspect.getsource(sym)
-            yield entry
+    def cls(cls, config: Config, f: pathlib.Path, pattern, index=None):
+        if index is not None:
+            tree = index
+        else:
+            with open(f, "r") as pyf:
+                source = pyf.read()
+            tree = ast.parse(source)
+        for node in tree.body:
+            if isinstance(node, ast.ClassDef):
+                name = node.name
+                line = node.lineno
+                match = re.search(pattern, name)
+                if not match:
+                    continue
+                entry = Entry(
+                    line=line, name=name, kind=EntryKind.Class, match=match.span()
+                )
+                yield entry
 
     @classmethod
-    def fun(cls, config: Config, f: pathlib.Path, pattern):
+    def index_file(cls, f: pathlib.Path):
         with open(f, "r") as pyf:
             source = pyf.read()
         tree = ast.parse(source)
+        return tree
+
+    @classmethod
+    def fun(cls, config: Config, f: pathlib.Path, pattern, index=None):
+        if index is not None:
+            tree = index
+        else:
+            with open(f, "r") as pyf:
+                source = pyf.read()
+            tree = ast.parse(source)
         for node in tree.body:
             if isinstance(node, ast.FunctionDef):
                 line = node.lineno
@@ -39,6 +51,8 @@ class PythonHandler:
                 match = re.search(pattern, name)
                 if not match:
                     continue
-                entry = Entry(line=line, name=name, kind=EntryKind.Function, match=match)
+                entry = Entry(
+                    line=line, name=name, kind=EntryKind.Function, match=match.span()
+                )
                 yield entry
         return []

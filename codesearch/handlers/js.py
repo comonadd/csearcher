@@ -7,11 +7,33 @@ import esprima
 
 class JSHandler:
     @classmethod
-    def cls(cls, config: Config, f: str, pattern):
+    def parse_file(cls, f: str):
         with open(f, "r") as source:
             program = source.read()
-        parsed = esprima.parseScript(program, {"loc": True})
-        for item in parsed.body:
+            is_typescript = str(f).endswith(".ts")
+            is_jsx = str(f).endswith(".jsx")
+            tree = esprima.parse(
+                program,
+                {
+                    "loc": True,
+                    "sourceType": "module",
+                    "jsx": is_jsx,
+                    "typescript": is_typescript,
+                },
+            )
+            return tree
+
+    @classmethod
+    def index_file(cls, f: str):
+        return cls.parse_file(f)
+
+    @classmethod
+    def cls(cls, config: Config, f: str, pattern, index=None):
+        if index is None:
+            tree = JSHandler.parse_file(f)
+        else:
+            tree = index
+        for item in tree.body:
             if item.type == "ClassDeclaration":
                 loc = item.id.loc
                 name = item.id.name
@@ -25,23 +47,12 @@ class JSHandler:
         return []
 
     @classmethod
-    def fun(cls, config: Config, f: str, pattern):
-        with open(f, "r") as source:
-            program = source.read()
-        is_typescript = str(f).endswith(".ts")
-        print(f"TYPESCRIPT ENABLED: {is_typescript}")
-        parsed = esprima.parse(
-            program,
-            {
-                "loc": True,
-                "sourceType": "module",
-                "jsx": True,
-                "typescript": is_typescript,
-            },
-        )
-        print("PROGRAM")
-        print(parsed)
-        for item in parsed.body:
+    def fun(cls, config: Config, f: str, pattern, index=None):
+        if index is None:
+            tree = JSHandler.parse_file(f)
+        else:
+            tree = index
+        for item in tree.body:
             if (
                 item.type == "VariableDeclaration"
                 and item.declarations[0].init.type == "ArrowFunctionExpression"
