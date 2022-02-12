@@ -1,17 +1,22 @@
 from dataclasses import asdict, dataclass
 from enum import IntEnum
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict, List
 
 
 class EntryKind(IntEnum):
     Function = 0
     Class = 1
+    Call = 2
 
     def __str__(self):
         return entry_kind_to_str[self]
 
 
-entry_kind_to_str = {EntryKind.Function: "Fun", EntryKind.Class: "Class"}
+entry_kind_to_str = {
+    EntryKind.Function: "Fun",
+    EntryKind.Class: "Class",
+    EntryKind.Call: "Call",
+}
 
 
 @dataclass
@@ -20,7 +25,7 @@ class Entry:
     kind: EntryKind
     name: str
     col: int = 0
-    match: Tuple[int, int] = (0, 0)
+    match: Optional[Tuple[int, int]] = None
     source: Optional[str] = None
 
     def __str__(self):
@@ -43,3 +48,7 @@ class Entry:
         res = cls(**d)
         res.kind = EntryKind(d["kind"])
         return res
+
+
+# Mapping of absolute file path to the list of entries for that file
+Entries = Dict[str, List[Entry]]
